@@ -31,7 +31,7 @@ function App() {
         <h1 className="text-5xl font-bold text-center text-gray-300">Listado de usuarios</h1>
       </header>
       <main className="p-4">
-        <div className="mb-6">
+        <div className="mb-6 text-center">
           <input
             type="text"
             placeholder="Buscar usuario por nombre"
