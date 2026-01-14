@@ -1,5 +1,5 @@
 import { consultarApi } from './api/api';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Modal from './components/modal';
 import type { UserType } from './types';
 
@@ -7,22 +7,42 @@ function App() {
   const [users, setUsers] = useState<UserType[]>([]); //especifiqué con el generic que es un array de UserType
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null); //estado de usuario seleccionado para el modal, especifiqué el tipo de dato con un generic
   const [searchBar, setSearchBar] = useState('');
+  const [loading, setLoading] = useState(true); //valor inicial de loading es un true por defecto, cuando se haga fetch y se carguen los datos, cambiará a false
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const data = await consultarApi();
         setUsers(data);
+        setLoading(false)
       } catch (error) {
         console.error('Error: ', error);
+        setLoading(false)
       }
     };
     fetchUsers();
   }, []);
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchBar.toLowerCase())
-  ); //comprobación para filtrar usuarios según escrito en la search bar. pongo todo en minúsculas para evitar problemas de comparación
+
+  if (loading) { // manejo la lógica de carga de las tarjetas de usuarios
+    return (
+      <header className="p-20 bg-blue-900">
+        <h1 className="text-5xl font-bold text-center text-gray-300">
+          Listado de usuarios
+        </h1>
+        <p className="text-3xl font-bold text-red-500 text-center">
+          Cargando contenido...
+        </p>
+      </header>
+    );
+  }
+
+  const filteredUsers = useMemo(() => {
+    return users.filter(user =>
+      user.name.toLowerCase().includes(searchBar.toLowerCase())
+    )
+  }, [users, searchBar]) //comprobación para filtrar usuarios según escrito en la search bar. pongo todo en minúsculas para evitar problemas de comparación
+  //he implementado useMemo para la optimización de la aplicación. El render se hace solo cuando cambia el state de users o searchbar
 
 
   return (
@@ -44,8 +64,8 @@ function App() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredUsers.map(user => ( // en vez de usar users, utilizo filteredUsers para mostrar solo los que coinciden con la búsqueda
-            <div key={user.id} className="border p-4 rounded shadow-md flex flex-col items-center justify-between bg-gray-300 cursor-pointer hover:bg-gray-400 transition-colors" 
-            onClick={() => setSelectedUser(user)} //selecciono el usuario al hacer click en su tarjeta
+            <div key={user.id} className="border p-4 rounded shadow-md flex flex-col items-center justify-between bg-gray-300 cursor-pointer hover:bg-gray-400 transition-colors"
+              onClick={() => setSelectedUser(user)} //selecciono el usuario al hacer click en su tarjeta
             >
               <h2 className="font-bold text-lg mb-2">{user.name}</h2>
               <p className="text-gray-900 mb-1">{user.email}</p>
@@ -53,7 +73,7 @@ function App() {
             </div>
           ))}
         </div>
-        
+
       </main>
       <Modal user={selectedUser} onClose={() => setSelectedUser(null)} />
     </>
